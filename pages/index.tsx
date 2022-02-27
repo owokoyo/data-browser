@@ -4,6 +4,8 @@ import {
 	CircularProgress,
 	Collapse,
 	Input,
+	LinearProgress,
+	Link,
 	Typography,
 } from "@mui/material";
 import type { NextPage } from "next";
@@ -17,7 +19,7 @@ import {
 	getProjectDatabase,
 } from "cdo-firebase-storage/firebaseUtils";
 import { FirebaseStorage, StorageViewer } from "../components/storageviewer";
-
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 async function loadFirebase(channel: string) {
 	// const c = await getCred(channel);
 	const url = new URL(location.origin);
@@ -84,6 +86,7 @@ const Index: NextPage = () => {
 					<>
 						<Typography variant="h4">
 							{firebaseStorage.data.name}
+							<Link style={{marginLeft: 10}} href={`https://studio.code.org${firebaseStorage.data.level}/${firebaseStorage.data.id}`} target="_blank"><OpenInNewIcon/></Link>
 						</Typography>
 						<StorageViewer storage={firebaseStorage.storage} />
 					</>
@@ -96,6 +99,7 @@ const Index: NextPage = () => {
 							Type in the code.org app{"'"}s id to start!
 						</Typography>
 						<Input
+							fullWidth
 							placeholder="code.org ID"
 							disabled={disabled}
 							inputRef={ref}
@@ -115,7 +119,7 @@ const Index: NextPage = () => {
 								}
 							}}
 						/>
-						{disabled ? <CircularProgress /> : <></>}
+						{disabled ? <LinearProgress /> : <></>}
 						<Collapse in={!!result}>
 							<Alert
 								onClose={() => {

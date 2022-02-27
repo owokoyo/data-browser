@@ -1,26 +1,53 @@
 import * as React from "react";
-import { alpha } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
-import TableSortLabel from "@mui/material/TableSortLabel";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
-import Checkbox from "@mui/material/Checkbox";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import { visuallyHidden } from "@mui/utils"
-import { DataEntry, getComparator, Order } from "../lib/util";
-import isUrl from "is-url";
-import { Link } from "@mui/material";
+import { Order, Primitive } from "../lib/util";
+import { EnhancedTableHead } from "./tableview";
+
+function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
+	if (b[orderBy] < a[orderBy]) {
+		return -1;
+	}
+	if (b[orderBy] > a[orderBy]) {
+		return 1;
+	}
+	return 0;
+}
+
+
+function getComparator<Key extends keyof any>(
+	order: Order,
+	orderBy: Key
+): (a: { [key in Key]: Primitive }, b: { [key in Key]: Primitive }) => number {
+	return order === "desc"
+		? (a, b) => descendingComparator(a, b, orderBy)
+		: (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+// This method is created for cross-browser compatibility, if you don't
+// need to support IE11, you can use Array.prototype.sort() directly
+function stableSort<T>(
+	array: readonly T[],
+	comparator: (a: T, b: T) => number
+) {
+	const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
+	stabilizedThis.sort((a, b) => {
+		const order = comparator(a[0], b[0]);
+		if (order !== 0) {
+			return order;
+		}
+		return a[1] - b[1];
+	});
+	return stabilizedThis.map((el) => el[0]);
+}
 
 interface HeadCell {
 	disablePadding: boolean;
@@ -30,66 +57,19 @@ interface HeadCell {
 }
 
 interface EnhancedTableProps {
-	// numSelected: number;
+	numSelected: number;
 	onRequestSort: (event: React.MouseEvent<unknown>, property: string) => void;
-	// onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
 	order: Order;
 	orderBy: string;
-	// rowCount: number;
+	rowCount: number;
 	cells: HeadCell[];
 }
 
-export function EnhancedTableHead(props: EnhancedTableProps) {
-	const {
-		// onSelectAllClick,
-		order,
-		orderBy,
-		// numSelected,
-		// rowCount,
-		onRequestSort,
-	} = props;
-	const createSortHandler =
-		(property: string) => (event: React.MouseEvent<unknown>) => {
-			onRequestSort(event, property);
-		};
-
-	return (
-		<TableHead>
-			<TableRow>
-				{props.cells.map((headCell) => (
-					<TableCell
-						key={headCell.id}
-						align={headCell.numeric ? "right" : "left"}
-						padding={headCell.disablePadding ? "none" : "normal"}
-						sortDirection={orderBy === headCell.id ? order : false}
-					>
-						<TableSortLabel
-							active={orderBy === headCell.id}
-							direction={orderBy === headCell.id ? order : "asc"}
-							onClick={createSortHandler(headCell.id)}
-						>
-							{headCell.label}
-							{orderBy === headCell.id ? (
-								<Box component="span" sx={visuallyHidden}>
-									{order === "desc"
-										? "sorted descending"
-										: "sorted ascending"}
-								</Box>
-							) : null}
-						</TableSortLabel>
-					</TableCell>
-				))}
-			</TableRow>
-		</TableHead>
-	);
-}
-
-export default function TableView({
+export default function KeysView({
 	rows,
-	columns,
 }: {
-	columns: string[];
-	rows: DataEntry[];
+	rows: {id: string, value: Primitive}[]
 }) {
 	const [order, setOrder] = React.useState<Order>("asc");
 	const [orderBy, setOrderBy] = React.useState<string>("calories");
@@ -122,19 +102,12 @@ export default function TableView({
 		setDense(event.target.checked);
 	};
 
-
 	// Avoid a layout jump when reaching the last page with empty rows.
 	const emptyRows =
-		page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+		page > 0 ? Math.max(0, (1 + page) * rowsPerPage - Object.keys(rows).length) : 0;
 
-		const cells = columns.map((e, i) => {
-		return {
-			id: e,
-			label: e,
-			disablePadding: i === 0,
-			numeric: i===0 || rows[0]&&(typeof rows[0][e] === "number"),
-		};
-	});
+	const cells = [{id: "id", label: "Key", numeric: false, disablePadding: true}, {id: "value", label: "Value", numeric: false, disablePadding: false}];
+
 
 	return (
 		<Box sx={{ width: "100%" }}>
@@ -146,16 +119,13 @@ export default function TableView({
 						size={dense ? "small" : "medium"}
 					>
 						<EnhancedTableHead
-							// numSelected={selected.length}
 							order={order}
 							orderBy={orderBy}
-							// onSelectAllClick={handleSelectAllClick}
 							onRequestSort={handleRequestSort}
-							// rowCount={rows.length}
 							cells={cells}
 						/>
 						<TableBody>
-							{rows.slice().sort(getComparator(order, orderBy))
+							{stableSort(rows, getComparator(order, orderBy))
 								.slice(
 									page * rowsPerPage,
 									page * rowsPerPage + rowsPerPage
@@ -167,27 +137,25 @@ export default function TableView({
 									return (
 										<TableRow
 											hover
+											// role="checkbox"
+											// aria-checked={isItemSelected}
 											tabIndex={-1}
 											key={row.id}
+											// selected={isItemSelected}
 										>
-											{columns.map((name, i) => {
-												return i === 0 ? (
+
+
 													<TableCell
-														key={i}
 														component="th"
 														id={labelId}
 														scope="row"
 														padding="none"
-														align="right"
 													>
-														{row[name]}
+														{row.id}
 													</TableCell>
-												) : (
-													<TableCell key={i} align={typeof rows[0][name] === "number" ? "right" : "left"}>
-														{isUrl(String(row[name]))?<Link href={row[name] as string}>{row[name]}</Link>:row[name]}
+													<TableCell>
+														{row.value}
 													</TableCell>
-												);
-											})}
 											
 										</TableRow>
 									);
