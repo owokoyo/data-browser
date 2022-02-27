@@ -9,11 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/styled": "^11.8.1",
+    "@mui/core": "^5.0.0-alpha.54",
+    "@mui/material": "^5.4.3",
+    "@mui/x-data-grid": "^5.5.1",
+    "buffer": "^6.0.3",
+    "cdo-firebase-storage": "^1.0.4",
     "next": "12.1.0",
+    "node-fetch": "^3.2.0",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "readable-stream": "^3.6.0"
   },
   "devDependencies": {
+    "@types/node": "^17.0.21",
     "@types/react": "17.0.39",
     "eslint": "8.10.0",
     "eslint-config-next": "12.1.0",
