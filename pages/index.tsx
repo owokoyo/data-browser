@@ -13,9 +13,11 @@ import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
 import { useEffect, useRef, useState } from "react";
-import FirebaseStorage, { initFirebaseStorage } from "cdo-firebase-storage/firebaseStorage";
+import { initFirebaseStorage } from "cdo-firebase-storage/firebaseStorage";
 import { StorageViewer } from "../components/storageviewer";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import {FirebaseStorage} from "../lib/util";
+
 async function loadFirebase(channel: string) {
 	// const c = await getCred(channel);
 	const url = new URL(location.origin);
