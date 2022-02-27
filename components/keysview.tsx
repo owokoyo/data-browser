@@ -5,12 +5,21 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TablePagination from "@mui/material/TablePagination";
+import TableFooter from "@mui/material/TableFooter";
+import Button from "@mui/material/Button";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import { Order, Primitive } from "../lib/util";
+import { Order, Primitive, StorageContext } from "../lib/util";
 import { EnhancedTableHead } from "./tableview";
+import { IconButton } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { KeysClearConfirmation } from "./keysClearConfirmation";
+import {
+	getPathRef,
+	getProjectDatabase,
+} from "cdo-firebase-storage/firebaseUtils";
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
 	if (b[orderBy] < a[orderBy]) {
@@ -21,7 +30,6 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
 	}
 	return 0;
 }
-
 
 function getComparator<Key extends keyof any>(
 	order: Order,
@@ -69,7 +77,7 @@ interface EnhancedTableProps {
 export default function KeysView({
 	rows,
 }: {
-	rows: {id: string, value: Primitive}[]
+	rows: { id: string; value: Primitive }[];
 }) {
 	const [order, setOrder] = React.useState<Order>("asc");
 	const [orderBy, setOrderBy] = React.useState<string>("calories");
@@ -77,6 +85,9 @@ export default function KeysView({
 	const [page, setPage] = React.useState(0);
 	const [dense, setDense] = React.useState(false);
 	const [rowsPerPage, setRowsPerPage] = React.useState(5);
+	const [keysClearConfirmationOpen, setKeysClearConfirmationOpen] =
+		React.useState(false);
+	const storage = React.useContext(StorageContext);
 
 	const handleRequestSort = (
 		event: React.MouseEvent<unknown>,
@@ -104,90 +115,126 @@ export default function KeysView({
 
 	// Avoid a layout jump when reaching the last page with empty rows.
 	const emptyRows =
-		page > 0 ? Math.max(0, (1 + page) * rowsPerPage - Object.keys(rows).length) : 0;
+		page > 0
+			? Math.max(0, (1 + page) * rowsPerPage - Object.keys(rows).length)
+			: 0;
 
-	const cells = [{id: "id", label: "Key", numeric: false, disablePadding: true}, {id: "value", label: "Value", numeric: false, disablePadding: false}];
-
+	const cells = [
+		{ id: "id", label: "Key", numeric: false, disablePadding: true },
+		{ id: "value", label: "Value", numeric: false, disablePadding: false },
+	];
 
 	return (
-		<Box sx={{ width: "100%" }}>
-			<Paper sx={{ width: "100%", mb: 2 }}>
-				<TableContainer>
-					<Table
-						sx={{ minWidth: 750 }}
-						aria-labelledby="tableTitle"
-						size={dense ? "small" : "medium"}
+		<>
+			<Box sx={{ width: "100%" }}>
+				<Paper sx={{ width: "100%", mb: 2 }}>
+					<TableContainer>
+						<Table
+							sx={{ minWidth: 750 }}
+							aria-labelledby="tableTitle"
+							size={dense ? "small" : "medium"}
+						>
+							<EnhancedTableHead
+								order={order}
+								orderBy={orderBy}
+								onRequestSort={handleRequestSort}
+								cells={cells}
+								rowCount={rows.length}
+								onClearPressed={() => {
+									setKeysClearConfirmationOpen(true);
+								}}
+							/>
+							<TableBody>
+								{rows
+									.slice()
+									.sort(getComparator(order, orderBy))
+									.slice(
+										page * rowsPerPage,
+										page * rowsPerPage + rowsPerPage
+									)
+									.map((row, index) => {
+										// const isItemSelected = isSelected(row.id);
+										const labelId = `enhanced-table-checkbox-${index}`;
+
+										return (
+											<TableRow
+												hover
+												// role="checkbox"
+												// aria-checked={isItemSelected}
+												tabIndex={-1}
+												key={row.id}
+												// selected={isItemSelected}
+											>
+												<TableCell>
+													<IconButton>
+														<DeleteIcon
+															onClick={() => {}}
+														/>
+													</IconButton>
+												</TableCell>
+												<TableCell
+													component="th"
+													id={labelId}
+													scope="row"
+													padding="none"
+												>
+													{row.id}
+												</TableCell>
+												<TableCell>
+													{row.value}
+												</TableCell>
+											</TableRow>
+										);
+									})}
+								{emptyRows > 0 && (
+									<TableRow
+										style={{
+											height:
+												(dense ? 33 : 53) * emptyRows,
+										}}
+									>
+										<TableCell colSpan={6} />
+									</TableRow>
+								)}
+							</TableBody>
+						</Table>
+					</TableContainer>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "space-between",
+						}}
 					>
-						<EnhancedTableHead
-							order={order}
-							orderBy={orderBy}
-							onRequestSort={handleRequestSort}
-							cells={cells}
+						<Button style={{ margin: 10 }}>Create Entry</Button>
+						<TablePagination
+							rowsPerPageOptions={[5, 10, 25, 100]}
+							component="div"
+							count={rows.length}
+							rowsPerPage={rowsPerPage}
+							page={page}
+							onPageChange={handleChangePage}
+							onRowsPerPageChange={handleChangeRowsPerPage}
 						/>
-						<TableBody>
-							{stableSort(rows, getComparator(order, orderBy))
-								.slice(
-									page * rowsPerPage,
-									page * rowsPerPage + rowsPerPage
-								)
-								.map((row, index) => {
-									// const isItemSelected = isSelected(row.id);
-									const labelId = `enhanced-table-checkbox-${index}`;
-
-									return (
-										<TableRow
-											hover
-											// role="checkbox"
-											// aria-checked={isItemSelected}
-											tabIndex={-1}
-											key={row.id}
-											// selected={isItemSelected}
-										>
-
-
-													<TableCell
-														component="th"
-														id={labelId}
-														scope="row"
-														padding="none"
-													>
-														{row.id}
-													</TableCell>
-													<TableCell>
-														{row.value}
-													</TableCell>
-											
-										</TableRow>
-									);
-								})}
-							{emptyRows > 0 && (
-								<TableRow
-									style={{
-										height: (dense ? 33 : 53) * emptyRows,
-									}}
-								>
-									<TableCell colSpan={6} />
-								</TableRow>
-							)}
-						</TableBody>
-					</Table>
-				</TableContainer>
-				<TablePagination
-					rowsPerPageOptions={[5, 10, 25, 100]}
-					component="div"
-					count={rows.length}
-					rowsPerPage={rowsPerPage}
-					page={page}
-					onPageChange={handleChangePage}
-					onRowsPerPageChange={handleChangeRowsPerPage}
+					</div>
+				</Paper>
+				<FormControlLabel
+					control={
+						<Switch checked={dense} onChange={handleChangeDense} />
+					}
+					label="Dense padding"
 				/>
-			</Paper>
-			<FormControlLabel
-				control={
-					<Switch checked={dense} onChange={handleChangeDense} />
-				}
-				label="Dense padding"
+			</Box>
+			<KeysClearConfirmation
+				isOpen={keysClearConfirmationOpen}
+				onRequestClose={() => {
+					setKeysClearConfirmationOpen(false);
+				}}
+				submit={(done) => {
+					const a = getPathRef(getProjectDatabase(), "storage/keys");
+					a.set(null);
+					done();
+				}}
 			/>
-		</Box>
+		</>
 	);
 }

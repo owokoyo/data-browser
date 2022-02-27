@@ -1,4 +1,5 @@
 import {
+	IconButton,
 	LinearProgress,
 	Tab,
 	Tabs,
@@ -7,14 +8,16 @@ import { initFirebaseStorage } from "cdo-firebase-storage/firebaseStorage";
 import {
 	getPathRef,
 	getProjectDatabase,
+	unescapeFirebaseKey,
 } from "cdo-firebase-storage/firebaseUtils";
-import { useEffect, useState } from "react";
-import { DataEntry } from "../lib/util";
+import { createContext, useEffect, useState } from "react";
+import { DataEntry, FirebaseStorage, Primitive, StorageContext } from "../lib/util";
 import TableView from "./tableview";
 import AddIcon from "@mui/icons-material/Add";
 import { CreateTableModal } from "./createTableModal";
-
-export type FirebaseStorage = ReturnType<typeof initFirebaseStorage>;
+import KeysView from "./keysview";
+import Delete from "@mui/icons-material/Delete";
+import { DeleteTableConfirmation } from "./deleteTableConfirmation";
 
 const keyValueSymbol = Symbol("Key Value Symbol");
 
@@ -28,22 +31,29 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 	const [columnsForTable, setColumnsForTable] = useState<string[]>([]);
 
 	const [createTableOpen, setCreateTableOpen] = useState(false);
-	
+
 	useEffect(() => {
 		const a = getPathRef(getProjectDatabase(), "counters/tables");
-		a.once("value", (snapshot: any) => {
-			const val = Object.keys(snapshot.val());
-			setCurrentTable(val[0]);
-			setTables(val);
+		a.on("value", (snapshot: any)=>{
+			const value = Object.keys(snapshot.val() || {});
+			setTables(value);
+			if (!currentTable || value.indexOf(currentTable as string)===-1) {
+				setCurrentTable(value[0] || keyValueSymbol);
+			}
 			setTablesLoaded(true);
-		});
+		})
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [storage]);
 
 	useEffect(() => {
 		if (!currentTable) return;
 		async function load() {
 			if (currentTable === keyValueSymbol) {
-				
+				const a = getPathRef(getProjectDatabase(), "storage/keys");
+				a.once("value", (snapshot: any)=>{
+					const value = Object.entries(snapshot.val() || {}).map(([k,v])=>{return {id:k as unknown as number, value:v as Primitive}});
+					setRecordsForTable(value);
+				})
 			} else {
 				const columns = await storage.getColumnsForTable(
 					currentTable,
@@ -64,14 +74,20 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 	}, [currentTable, storage]);
 
 	return (
-		<>
+		<StorageContext.Provider value={storage}>
 			{tablesLoaded ? (
 				<>
 					<Tabs value={currentTable} variant="scrollable">
 						{[
 							...tables.map((t) => {
-								return (
+								return [
 									<Tab
+									
+										style={{
+											display:"flex",
+											flexDirection:"row"
+										}}
+										
 										onClick={() => {
 											if (currentTable!==t){
 												setCurrentTable(t);
@@ -80,9 +96,17 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 										}}
 										key={"_"+t}
 										value={t}
-										label={t}
+										label={<>
+										{t}
+										<IconButton style={{marginLeft: 3}} onClick={(event)=>{
+											
+											event.stopPropagation();
+										}} onMouseDown={(event)=>{
+											event.stopPropagation();
+										}}><Delete fontSize="small"/></IconButton>
+										</>}
 									/>
-								);
+								]
 							}),
 							<Tab
 								key="keyValue"
@@ -90,6 +114,7 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 								label="Key Values"
 								onClick={() => {
 									setCurrentTable(keyValueSymbol);
+									setRecordsForTable(null);
 								}}
 							/>,
 							<Tab
@@ -104,8 +129,9 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 						]}
 					</Tabs>
 					{recordsForTable !== null ? (
-						<>
+						currentTable === keyValueSymbol ? <KeysView rows={recordsForTable as unknown as {id: string, value: string}[]}/>: <>
 							<TableView
+								tableName={currentTable}
 								rows={recordsForTable}
 								columns={columnsForTable}
 							/>
@@ -126,6 +152,7 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 
 				})
 			}}/>
-		</>
+			{/* <DeleteTableConfirmation/> */}
+		</StorageContext.Provider>
 	);
 }

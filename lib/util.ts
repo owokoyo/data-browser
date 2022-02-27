@@ -1,3 +1,8 @@
+import FirebaseStorage, { initFirebaseStorage } from "cdo-firebase-storage/firebaseStorage";
+import { createContext } from "react";
+
+export type FirebaseStorage = ReturnType<typeof initFirebaseStorage>;
+export const StorageContext = createContext<FirebaseStorage>(null as any);
 
 export function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
 	if (b[orderBy] < a[orderBy]) {

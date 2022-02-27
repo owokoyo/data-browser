@@ -17,10 +17,12 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import { visuallyHidden } from "@mui/utils"
-import { DataEntry, getComparator, Order } from "../lib/util";
+import { visuallyHidden } from "@mui/utils";
+import { DataEntry, getComparator, Order, StorageContext } from "../lib/util";
 import isUrl from "is-url";
-import { Link } from "@mui/material";
+import { Button, Link, TableFooter } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { ClearConfirmation } from "./clearConfirmationModal";
 
 interface HeadCell {
 	disablePadding: boolean;
@@ -35,8 +37,9 @@ interface EnhancedTableProps {
 	// onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
 	order: Order;
 	orderBy: string;
-	// rowCount: number;
+	rowCount: number;
 	cells: HeadCell[];
+	onClearPressed: () => void;
 }
 
 export function EnhancedTableHead(props: EnhancedTableProps) {
@@ -45,7 +48,7 @@ export function EnhancedTableHead(props: EnhancedTableProps) {
 		order,
 		orderBy,
 		// numSelected,
-		// rowCount,
+		rowCount,
 		onRequestSort,
 	} = props;
 	const createSortHandler =
@@ -56,6 +59,17 @@ export function EnhancedTableHead(props: EnhancedTableProps) {
 	return (
 		<TableHead>
 			<TableRow>
+				<TableCell>
+					<Button
+						disabled={rowCount === 0}
+						color="error"
+						onClick={() => {
+							props.onClearPressed();
+						}}
+					>
+						Clear
+					</Button>
+				</TableCell>
 				{props.cells.map((headCell) => (
 					<TableCell
 						key={headCell.id}
@@ -87,9 +101,11 @@ export function EnhancedTableHead(props: EnhancedTableProps) {
 export default function TableView({
 	rows,
 	columns,
+	tableName,
 }: {
 	columns: string[];
 	rows: DataEntry[];
+	tableName: string;
 }) {
 	const [order, setOrder] = React.useState<Order>("asc");
 	const [orderBy, setOrderBy] = React.useState<string>("calories");
@@ -97,7 +113,9 @@ export default function TableView({
 	const [page, setPage] = React.useState(0);
 	const [dense, setDense] = React.useState(false);
 	const [rowsPerPage, setRowsPerPage] = React.useState(5);
-
+	const [clearConfirmationOpen, setClearConfirmationOpen] =
+		React.useState(false);
+	const storage = React.useContext(StorageContext);
 	const handleRequestSort = (
 		event: React.MouseEvent<unknown>,
 		property: string
@@ -122,104 +140,161 @@ export default function TableView({
 		setDense(event.target.checked);
 	};
 
-
 	// Avoid a layout jump when reaching the last page with empty rows.
 	const emptyRows =
 		page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-		const cells = columns.map((e, i) => {
+	const cells = columns.map((e, i) => {
 		return {
 			id: e,
 			label: e,
 			disablePadding: i === 0,
-			numeric: i===0 || rows[0]&&(typeof rows[0][e] === "number"),
+			numeric: i === 0 || (rows[0] && typeof rows[0][e] === "number"),
 		};
 	});
 
 	return (
-		<Box sx={{ width: "100%" }}>
-			<Paper sx={{ width: "100%", mb: 2 }}>
-				<TableContainer>
-					<Table
-						sx={{ minWidth: 750 }}
-						aria-labelledby="tableTitle"
-						size={dense ? "small" : "medium"}
-					>
-						<EnhancedTableHead
-							// numSelected={selected.length}
-							order={order}
-							orderBy={orderBy}
-							// onSelectAllClick={handleSelectAllClick}
-							onRequestSort={handleRequestSort}
-							// rowCount={rows.length}
-							cells={cells}
-						/>
-						<TableBody>
-							{rows.slice().sort(getComparator(order, orderBy))
-								.slice(
-									page * rowsPerPage,
-									page * rowsPerPage + rowsPerPage
-								)
-								.map((row, index) => {
-									// const isItemSelected = isSelected(row.id);
-									const labelId = `enhanced-table-checkbox-${index}`;
+		<>
+			<Box sx={{ width: "100%" }}>
+				<Paper sx={{ width: "100%", mb: 2 }}>
+					<TableContainer>
+						<Table
+							sx={{ minWidth: 750 }}
+							aria-labelledby="tableTitle"
+							size={dense ? "small" : "medium"}
+						>
+							<EnhancedTableHead
+								// numSelected={selected.length}
+								order={order}
+								orderBy={orderBy}
+								// onSelectAllClick={handleSelectAllClick}
+								onRequestSort={handleRequestSort}
+								rowCount={rows.length}
+								cells={cells}
+								onClearPressed={() => {
+									setClearConfirmationOpen(true);
+								}}
+							/>
+							<TableBody>
+								{rows
+									.slice()
+									.sort(getComparator(order, orderBy))
+									.slice(
+										page * rowsPerPage,
+										page * rowsPerPage + rowsPerPage
+									)
+									.map((row, index) => {
+										// const isItemSelected = isSelected(row.id);
+										const labelId = `enhanced-table-checkbox-${index}`;
 
-									return (
-										<TableRow
-											hover
-											tabIndex={-1}
-											key={row.id}
-										>
-											{columns.map((name, i) => {
-												return i === 0 ? (
-													<TableCell
-														key={i}
-														component="th"
-														id={labelId}
-														scope="row"
-														padding="none"
-														align="right"
-													>
-														{row[name]}
-													</TableCell>
-												) : (
-													<TableCell key={i} align={typeof rows[0][name] === "number" ? "right" : "left"}>
-														{isUrl(String(row[name]))?<Link href={row[name] as string}>{row[name]}</Link>:row[name]}
-													</TableCell>
-												);
-											})}
-											
-										</TableRow>
-									);
-								})}
-							{emptyRows > 0 && (
-								<TableRow
-									style={{
-										height: (dense ? 33 : 53) * emptyRows,
-									}}
-								>
-									<TableCell colSpan={6} />
-								</TableRow>
-							)}
-						</TableBody>
-					</Table>
-				</TableContainer>
-				<TablePagination
-					rowsPerPageOptions={[5, 10, 25, 100]}
-					component="div"
-					count={rows.length}
-					rowsPerPage={rowsPerPage}
-					page={page}
-					onPageChange={handleChangePage}
-					onRowsPerPageChange={handleChangeRowsPerPage}
+										return (
+											<TableRow
+												hover
+												tabIndex={-1}
+												key={row.id}
+											>
+												<TableCell>
+													<IconButton>
+														<DeleteIcon
+															onClick={() => {}}
+														/>
+													</IconButton>
+												</TableCell>
+												{columns.map((name, i) => {
+													return i === 0 ? (
+														<TableCell
+															key={i}
+															component="th"
+															id={labelId}
+															scope="row"
+															padding="none"
+															align="right"
+														>
+															{row[name]}
+														</TableCell>
+													) : (
+														<TableCell
+															key={i}
+															align={
+																typeof rows[0][
+																	name
+																] === "number"
+																	? "right"
+																	: "left"
+															}
+														>
+															{isUrl(
+																String(
+																	row[name]
+																)
+															) ? (
+																<Link
+																	href={
+																		row[
+																			name
+																		] as string
+																	}
+																>
+																	{row[name]}
+																</Link>
+															) : (
+																row[name]
+															)}
+														</TableCell>
+													);
+												})}
+											</TableRow>
+										);
+									})}
+								{emptyRows > 0 && (
+									<TableRow
+										style={{
+											height:
+												(dense ? 33 : 53) * emptyRows,
+										}}
+									>
+										<TableCell colSpan={6} />
+									</TableRow>
+								)}
+							</TableBody>
+						</Table>
+					</TableContainer>
+					<div style={{display: "flex", justifyContent: "space-between"}}>
+						<Button style={{margin: 10}}>Create Entry</Button>
+						<TablePagination
+							rowsPerPageOptions={[5, 10, 25, 100]}
+							component="div"
+							count={rows.length}
+							rowsPerPage={rowsPerPage}
+							page={page}
+							onPageChange={handleChangePage}
+							onRowsPerPageChange={
+								handleChangeRowsPerPage
+							}
+						/>
+					</div>
+				</Paper>
+				<FormControlLabel
+					control={
+						<Switch checked={dense} onChange={handleChangeDense} />
+					}
+					label="Dense padding"
 				/>
-			</Paper>
-			<FormControlLabel
-				control={
-					<Switch checked={dense} onChange={handleChangeDense} />
-				}
-				label="Dense padding"
+			</Box>
+			<ClearConfirmation
+				isOpen={clearConfirmationOpen}
+				onRequestClose={() => {
+					setClearConfirmationOpen(false);
+				}}
+				submit={(done) => {
+					storage.clearTable(tableName, ()=>{
+						done();
+					}, ()=>{
+						// todo: alert error?
+						done();
+					});
+				}}
 			/>
-		</Box>
+		</>
 	);
 }
