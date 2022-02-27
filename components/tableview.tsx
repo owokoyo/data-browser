@@ -18,11 +18,14 @@ import Tooltip from "@mui/material/Tooltip";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import { visuallyHidden } from "@mui/utils";
-import { DataEntry, getComparator, Order, StorageContext } from "../lib/util";
+import { DataEntry, getComparator, Order, Primitive, StorageContext } from "../lib/util";
 import isUrl from "is-url";
-import { Button, Link, TableFooter } from "@mui/material";
+import { Alert, Button, Input, Link, Snackbar, TableFooter } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { ClearConfirmation } from "./clearConfirmationModal";
+import { EntryContextMenu } from "./entrycontextmenu";
+import SaveIcon from "@mui/icons-material/Save";
+import { ValidatedInput } from "./validatedinput";
 
 interface HeadCell {
 	disablePadding: boolean;
@@ -39,7 +42,7 @@ interface EnhancedTableProps {
 	orderBy: string;
 	rowCount: number;
 	cells: HeadCell[];
-	onClearPressed: () => void;
+	onCreatePressed: () => void;
 }
 
 export function EnhancedTableHead(props: EnhancedTableProps) {
@@ -51,10 +54,9 @@ export function EnhancedTableHead(props: EnhancedTableProps) {
 		rowCount,
 		onRequestSort,
 	} = props;
-	const createSortHandler =
-		(property: string) => (event: React.MouseEvent<unknown>) => {
-			onRequestSort(event, property);
-		};
+	const createSortHandler = (property: string) => (event: React.MouseEvent<unknown>) => {
+		onRequestSort(event, property);
+	};
 
 	return (
 		<TableHead>
@@ -62,12 +64,11 @@ export function EnhancedTableHead(props: EnhancedTableProps) {
 				<TableCell>
 					<Button
 						disabled={rowCount === 0}
-						color="error"
 						onClick={() => {
-							props.onClearPressed();
+							props.onCreatePressed();
 						}}
 					>
-						Clear
+						Create Entry
 					</Button>
 				</TableCell>
 				{props.cells.map((headCell) => (
@@ -82,12 +83,10 @@ export function EnhancedTableHead(props: EnhancedTableProps) {
 							direction={orderBy === headCell.id ? order : "asc"}
 							onClick={createSortHandler(headCell.id)}
 						>
-							{headCell.label}
+							<strong>{headCell.label}</strong>
 							{orderBy === headCell.id ? (
 								<Box component="span" sx={visuallyHidden}>
-									{order === "desc"
-										? "sorted descending"
-										: "sorted ascending"}
+									{order === "desc" ? "sorted descending" : "sorted ascending"}
 								</Box>
 							) : null}
 						</TableSortLabel>
@@ -113,13 +112,12 @@ export default function TableView({
 	const [page, setPage] = React.useState(0);
 	const [dense, setDense] = React.useState(false);
 	const [rowsPerPage, setRowsPerPage] = React.useState(5);
-	const [clearConfirmationOpen, setClearConfirmationOpen] =
-		React.useState(false);
+	const [clearConfirmationOpen, setClearConfirmationOpen] = React.useState(false);
 	const storage = React.useContext(StorageContext);
-	const handleRequestSort = (
-		event: React.MouseEvent<unknown>,
-		property: string
-	) => {
+	const [snackbarStatus, setSnackbarStatus] = React.useState<any>(null);
+	const snackbarOpen = Boolean(snackbarStatus);
+
+	const handleRequestSort = (event: React.MouseEvent<unknown>, property: string) => {
 		const isAsc = orderBy === property && order === "asc";
 		setOrder(isAsc ? "desc" : "asc");
 		setOrderBy(property);
@@ -129,9 +127,7 @@ export default function TableView({
 		setPage(newPage);
 	};
 
-	const handleChangeRowsPerPage = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
+	const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setRowsPerPage(parseInt(event.target.value, 10));
 		setPage(0);
 	};
@@ -141,8 +137,7 @@ export default function TableView({
 	};
 
 	// Avoid a layout jump when reaching the last page with empty rows.
-	const emptyRows =
-		page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+	const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
 	const cells = columns.map((e, i) => {
 		return {
@@ -153,16 +148,20 @@ export default function TableView({
 		};
 	});
 
+	const [isEditing, setIsEditing] = React.useState<number | null>(null);
+
+	const refs = React.useRef<Record<string, Primitive>>({});
+
+	React.useEffect(() => {
+		refs.current = {};
+	}, [columns]);
+
 	return (
 		<>
 			<Box sx={{ width: "100%" }}>
 				<Paper sx={{ width: "100%", mb: 2 }}>
 					<TableContainer>
-						<Table
-							sx={{ minWidth: 750 }}
-							aria-labelledby="tableTitle"
-							size={dense ? "small" : "medium"}
-						>
+						<Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle" size={dense ? "small" : "medium"}>
 							<EnhancedTableHead
 								// numSelected={selected.length}
 								order={order}
@@ -171,36 +170,61 @@ export default function TableView({
 								onRequestSort={handleRequestSort}
 								rowCount={rows.length}
 								cells={cells}
-								onClearPressed={() => {
-									setClearConfirmationOpen(true);
-								}}
+								onCreatePressed={() => {}}
 							/>
 							<TableBody>
 								{rows
 									.slice()
 									.sort(getComparator(order, orderBy))
-									.slice(
-										page * rowsPerPage,
-										page * rowsPerPage + rowsPerPage
-									)
+									.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 									.map((row, index) => {
 										// const isItemSelected = isSelected(row.id);
 										const labelId = `enhanced-table-checkbox-${index}`;
 
 										return (
-											<TableRow
-												hover
-												tabIndex={-1}
-												key={row.id}
-											>
+											<TableRow hover tabIndex={-1} key={row.id}>
 												<TableCell>
-													<IconButton>
-														<DeleteIcon
-															onClick={() => {}}
+													{isEditing === row.id ? (
+														<IconButton
+															onClick={() => {
+																const obj = {...row, ...Object.fromEntries(
+																	Object.keys(refs.current).map((column) => {
+																		return [
+																			column,
+																			refs.current[column],
+																		];
+																	})
+																)};
+																storage.updateRecord(tableName, obj, ()=>{
+																	
+																},(err: any)=>{
+																	setSnackbarStatus(`Failed to update record: ${err.msg}`);
+																});
+																setIsEditing(null);
+															}}
+														>
+															<SaveIcon />
+														</IconButton>
+													) : (
+														<EntryContextMenu
+															delete={() => {
+																storage.deleteRecord(tableName, {id:row.id}, (yes)=>{
+																	if (yes){
+																		// yay
+																	} else {
+																		setSnackbarStatus(`Succcess to delete record`);
+																	}
+																}, (err: any)=>{
+																	setSnackbarStatus(`Failed to delete record: ${err.msg}`);
+																})
+															}}
+															edit={() => {
+																setIsEditing(row.id);
+															}}
 														/>
-													</IconButton>
+													)}
 												</TableCell>
-												{columns.map((name, i) => {
+												{columns.map((column, i) => {
 													return i === 0 ? (
 														<TableCell
 															key={i}
@@ -210,35 +234,23 @@ export default function TableView({
 															padding="none"
 															align="right"
 														>
-															{row[name]}
+															{row[column]}
 														</TableCell>
 													) : (
 														<TableCell
 															key={i}
 															align={
-																typeof rows[0][
-																	name
-																] === "number"
-																	? "right"
-																	: "left"
+																typeof rows[0][column] === "number" ? "right" : "left"
 															}
 														>
-															{isUrl(
-																String(
-																	row[name]
-																)
-															) ? (
-																<Link
-																	href={
-																		row[
-																			name
-																		] as string
-																	}
-																>
-																	{row[name]}
-																</Link>
+															{isEditing === row.id ? (
+																<ValidatedInput onInputChanged={(value)=>{
+																	refs.current[column] = value;
+																}} initialValue={row[column]} />
+															) : isUrl(String(row[column])) ? (
+																<Link href={row[column] as string}>{row[column]}</Link>
 															) : (
-																row[name]
+																row[column]
 															)}
 														</TableCell>
 													);
@@ -249,8 +261,7 @@ export default function TableView({
 								{emptyRows > 0 && (
 									<TableRow
 										style={{
-											height:
-												(dense ? 33 : 53) * emptyRows,
+											height: (dense ? 33 : 53) * emptyRows,
 										}}
 									>
 										<TableCell colSpan={6} />
@@ -259,40 +270,58 @@ export default function TableView({
 							</TableBody>
 						</Table>
 					</TableContainer>
-					<div style={{display: "flex", justifyContent: "space-between"}}>
-						<Button style={{margin: 10}}>Create Entry</Button>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "space-between",
+						}}
+					>
+						<Button
+							style={{ margin: 10 }}
+							color="error"
+							onClick={() => {
+								setClearConfirmationOpen(true);
+							}}
+						>
+							Clear
+						</Button>
 						<TablePagination
-							rowsPerPageOptions={[5, 10, 25, 100]}
+							rowsPerPageOptions={[5, 10, 25, 100, 500]}
 							component="div"
 							count={rows.length}
 							rowsPerPage={rowsPerPage}
 							page={page}
 							onPageChange={handleChangePage}
-							onRowsPerPageChange={
-								handleChangeRowsPerPage
-							}
+							onRowsPerPageChange={handleChangeRowsPerPage}
 						/>
 					</div>
 				</Paper>
 				<FormControlLabel
-					control={
-						<Switch checked={dense} onChange={handleChangeDense} />
-					}
+					control={<Switch checked={dense} onChange={handleChangeDense} />}
 					label="Dense padding"
 				/>
 			</Box>
+			<Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={()=>{
+				setSnackbarStatus(null);
+			}}>
+				<Alert severity="error">{snackbarStatus}</Alert>
+			</Snackbar>
 			<ClearConfirmation
 				isOpen={clearConfirmationOpen}
 				onRequestClose={() => {
 					setClearConfirmationOpen(false);
 				}}
 				submit={(done) => {
-					storage.clearTable(tableName, ()=>{
-						done();
-					}, ()=>{
-						// todo: alert error?
-						done();
-					});
+					storage.clearTable(
+						tableName,
+						() => {
+							done();
+						},
+						() => {
+							// todo: alert error?
+							done();
+						}
+					);
 				}}
 			/>
 		</>

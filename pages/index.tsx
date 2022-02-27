@@ -17,6 +17,7 @@ import { initFirebaseStorage } from "cdo-firebase-storage/firebaseStorage";
 import { StorageViewer } from "../components/storageviewer";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {FirebaseStorage} from "../lib/util";
+import GitHubIcon from '@mui/icons-material/GitHub';
 
 async function loadFirebase(channel: string) {
 	// const c = await getCred(channel);
@@ -91,7 +92,8 @@ const Index: NextPage = () => {
 				) : (
 					<>
 						<Typography variant="h4">
-							Code.org Storage Viewer
+							Code.org Data Browser and Editor
+							<Link style={{marginLeft: 20}} href="https://github.com/owokoyo/data-browser"><GitHubIcon/></Link>
 						</Typography>
 						<Typography>
 							Type in the code.org app{"'"}s id to start!
@@ -125,7 +127,7 @@ const Index: NextPage = () => {
 								}}
 								severity="error"
 							>
-								{String(result)}
+								{"That's not a code.org project"}
 							</Alert>
 						</Collapse>
 					</>

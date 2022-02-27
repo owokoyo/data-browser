@@ -1,6 +1,8 @@
 import {
+	Alert,
 	IconButton,
 	LinearProgress,
+	Snackbar,
 	Tab,
 	Tabs,
 } from "@mui/material";
@@ -32,10 +34,18 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 
 	const [createTableOpen, setCreateTableOpen] = useState(false);
 
+	const [deleteTableConfirmationOpen, setDeleteTableConfirmationOpen] = useState<string | null>(null);
+	const [snackbarStatus, setSnackbarStatus] = useState<any>(null);
+	const snackbarOpen = Boolean(snackbarStatus);
+	
 	useEffect(() => {
 		const a = getPathRef(getProjectDatabase(), "counters/tables");
 		a.on("value", (snapshot: any)=>{
 			const value = Object.keys(snapshot.val() || {});
+			// tables are already seen as "loaded" prior to this.
+			// neither setTables or setCurrentTable can be called before the other
+			// tables loaded must be set to false before the 2 updates
+			setTablesLoaded(false)
 			setTables(value);
 			if (!currentTable || value.indexOf(currentTable as string)===-1) {
 				setCurrentTable(value[0] || keyValueSymbol);
@@ -99,7 +109,7 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 										label={<>
 										{t}
 										<IconButton style={{marginLeft: 3}} onClick={(event)=>{
-											
+											setDeleteTableConfirmationOpen(t);
 											event.stopPropagation();
 										}} onMouseDown={(event)=>{
 											event.stopPropagation();
@@ -148,11 +158,26 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 					Promise.all(options.map(option=>new Promise((res, rej)=>storage.addColumn(name, option, res, rej)))).then(e=>{
 						done();
 					})
-				}, ()=>{
-
+				}, (e: any)=>{
+					setSnackbarStatus(`Failed to create table: ${e.msg}`)
+					done();
 				})
 			}}/>
-			{/* <DeleteTableConfirmation/> */}
+			<DeleteTableConfirmation isOpen={Boolean(deleteTableConfirmationOpen)} submit={(done)=>{
+				storage.deleteTable(deleteTableConfirmationOpen!, undefined as any, ()=>{
+					done()
+				}, (e: any)=>{
+					setSnackbarStatus(`Failed to delete table: ${e.msg}`)
+					done();
+				});
+			}} onRequestClose={()=>{
+				setDeleteTableConfirmationOpen(null);
+			}}/>
+			<Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={()=>{
+				setSnackbarStatus(null);
+			}}>
+				<Alert severity="error">{snackbarStatus}</Alert>
+			</Snackbar>
 		</StorageContext.Provider>
 	);
 }

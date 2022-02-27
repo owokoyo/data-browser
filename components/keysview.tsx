@@ -13,13 +13,12 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import { Order, Primitive, StorageContext } from "../lib/util";
 import { EnhancedTableHead } from "./tableview";
-import { IconButton } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
 import { KeysClearConfirmation } from "./keysClearConfirmation";
 import {
 	getPathRef,
 	getProjectDatabase,
 } from "cdo-firebase-storage/firebaseUtils";
+import { EntryContextMenu } from "./entrycontextmenu";
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
 	if (b[orderBy] < a[orderBy]) {
@@ -81,7 +80,6 @@ export default function KeysView({
 }) {
 	const [order, setOrder] = React.useState<Order>("asc");
 	const [orderBy, setOrderBy] = React.useState<string>("calories");
-	const [selected, setSelected] = React.useState<readonly number[]>([]);
 	const [page, setPage] = React.useState(0);
 	const [dense, setDense] = React.useState(false);
 	const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -140,8 +138,8 @@ export default function KeysView({
 								onRequestSort={handleRequestSort}
 								cells={cells}
 								rowCount={rows.length}
-								onClearPressed={() => {
-									setKeysClearConfirmationOpen(true);
+								onCreatePressed={() => {
+									
 								}}
 							/>
 							<TableBody>
@@ -166,11 +164,11 @@ export default function KeysView({
 												// selected={isItemSelected}
 											>
 												<TableCell>
-													<IconButton>
-														<DeleteIcon
-															onClick={() => {}}
-														/>
-													</IconButton>
+												<EntryContextMenu edit={()=>{
+
+												}} delete={()=>{
+
+												}}/>
 												</TableCell>
 												<TableCell
 													component="th"
@@ -205,9 +203,9 @@ export default function KeysView({
 							justifyContent: "space-between",
 						}}
 					>
-						<Button style={{ margin: 10 }}>Create Entry</Button>
+						
 						<TablePagination
-							rowsPerPageOptions={[5, 10, 25, 100]}
+							rowsPerPageOptions={[5, 10, 25, 100, 500]}
 							component="div"
 							count={rows.length}
 							rowsPerPage={rowsPerPage}
