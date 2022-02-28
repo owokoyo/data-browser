@@ -26,6 +26,7 @@ import { ClearConfirmation } from "./clearConfirmationModal";
 import { EntryContextMenu } from "./entrycontextmenu";
 import SaveIcon from "@mui/icons-material/Save";
 import { ValidatedInput } from "./validatedinput";
+import { TableEntryModal } from "./tableEntryModal";
 
 interface HeadCell {
 	disablePadding: boolean;
@@ -40,7 +41,7 @@ interface EnhancedTableProps {
 	// onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
 	order: Order;
 	orderBy: string;
-	rowCount: number;
+	// rowCount: number;
 	cells: HeadCell[];
 	onCreatePressed: () => void;
 }
@@ -51,7 +52,7 @@ export function EnhancedTableHead(props: EnhancedTableProps) {
 		order,
 		orderBy,
 		// numSelected,
-		rowCount,
+		// rowCount,
 		onRequestSort,
 	} = props;
 	const createSortHandler = (property: string) => (event: React.MouseEvent<unknown>) => {
@@ -63,7 +64,6 @@ export function EnhancedTableHead(props: EnhancedTableProps) {
 			<TableRow>
 				<TableCell>
 					<Button
-						disabled={rowCount === 0}
 						onClick={() => {
 							props.onCreatePressed();
 						}}
@@ -113,6 +113,7 @@ export default function TableView({
 	const [dense, setDense] = React.useState(false);
 	const [rowsPerPage, setRowsPerPage] = React.useState(5);
 	const [clearConfirmationOpen, setClearConfirmationOpen] = React.useState(false);
+	const [tableEntryModalOpen, setTableEntryModalOpen] = React.useState(false);
 	const storage = React.useContext(StorageContext);
 	const [snackbarStatus, setSnackbarStatus] = React.useState<any>(null);
 	const snackbarOpen = Boolean(snackbarStatus);
@@ -152,6 +153,8 @@ export default function TableView({
 
 	const refs = React.useRef<Record<string, Primitive>>({});
 
+	const editableColumns = columns.slice(1);
+
 	React.useEffect(() => {
 		refs.current = {};
 	}, [columns]);
@@ -168,9 +171,10 @@ export default function TableView({
 								orderBy={orderBy}
 								// onSelectAllClick={handleSelectAllClick}
 								onRequestSort={handleRequestSort}
-								rowCount={rows.length}
 								cells={cells}
-								onCreatePressed={() => {}}
+								onCreatePressed={() => {
+									setTableEntryModalOpen(true);
+								}}
 							/>
 							<TableBody>
 								{rows
@@ -279,6 +283,7 @@ export default function TableView({
 						<Button
 							style={{ margin: 10 }}
 							color="error"
+							disabled={rows.length === 0}
 							onClick={() => {
 								setClearConfirmationOpen(true);
 							}}
@@ -306,6 +311,16 @@ export default function TableView({
 			}}>
 				<Alert severity="error">{snackbarStatus}</Alert>
 			</Snackbar>
+			<TableEntryModal columns={editableColumns} isOpen={tableEntryModalOpen} onRequestClose={()=>{
+				setTableEntryModalOpen(false)
+			}} submit={(entry, done)=>{
+				storage.createRecord(tableName, entry, ()=>{
+					done();
+				}, ()=>{
+					// handle error
+					done();
+				});
+			}}/>
 			<ClearConfirmation
 				isOpen={clearConfirmationOpen}
 				onRequestClose={() => {

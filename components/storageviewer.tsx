@@ -12,6 +12,8 @@ import {
 	getProjectDatabase,
 	unescapeFirebaseKey,
 } from "cdo-firebase-storage/firebaseUtils";
+import {onColumnsChange} from "cdo-firebase-storage/firebaseMetadata";
+
 import { createContext, useEffect, useState } from "react";
 import { DataEntry, FirebaseStorage, Primitive, StorageContext } from "../lib/util";
 import TableView from "./tableview";
@@ -37,7 +39,8 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 	const [deleteTableConfirmationOpen, setDeleteTableConfirmationOpen] = useState<string | null>(null);
 	const [snackbarStatus, setSnackbarStatus] = useState<any>(null);
 	const snackbarOpen = Boolean(snackbarStatus);
-	
+	// todo: make table and columns a ref instead of a react state.
+
 	useEffect(() => {
 		const a = getPathRef(getProjectDatabase(), "counters/tables");
 		a.on("value", (snapshot: any)=>{
@@ -52,6 +55,7 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 			}
 			setTablesLoaded(true);
 		})
+
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [storage]);
 
@@ -65,6 +69,23 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 					setRecordsForTable(value);
 				})
 			} else {
+				onColumnsChange(getProjectDatabase(), currentTable, (e: any)=>{
+					//setColumnsForTable(e);
+				})
+				storage.resetRecordListener();
+				//@ts-ignore
+				storage.onRecordEvent(currentTable, (a: Record<string, Primitive>, b: "create" | "delete" | "update")=>{
+					if (b === "create") {
+						setRecordsForTable(recordsForTable)
+					} else if (b === "delete") {
+
+					} else if (b === "update") {
+
+					}
+				}, (e)=>{
+					console.log(e);
+				}, false);
+		
 				const columns = await storage.getColumnsForTable(
 					currentTable,
 					undefined

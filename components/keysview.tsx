@@ -137,7 +137,6 @@ export default function KeysView({
 								orderBy={orderBy}
 								onRequestSort={handleRequestSort}
 								cells={cells}
-								rowCount={rows.length}
 								onCreatePressed={() => {
 									
 								}}
@@ -203,7 +202,16 @@ export default function KeysView({
 							justifyContent: "space-between",
 						}}
 					>
-						
+						<Button
+							style={{ margin: 10 }}
+							color="error"
+							disabled={rows.length === 0}
+							onClick={() => {
+								setKeysClearConfirmationOpen(true);
+							}}
+						>
+							Clear
+						</Button>
 						<TablePagination
 							rowsPerPageOptions={[5, 10, 25, 100, 500]}
 							component="div"
