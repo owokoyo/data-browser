@@ -14,7 +14,7 @@ import {
 } from "cdo-firebase-storage/firebaseUtils";
 import {onColumnsChange} from "cdo-firebase-storage/firebaseMetadata";
 
-import { createContext, useEffect, useState } from "react";
+import { Component, createContext, useEffect, useState } from "react";
 import { DataEntry, FirebaseStorage, Primitive, StorageContext } from "../lib/util";
 import TableView from "./tableview";
 import AddIcon from "@mui/icons-material/Add";
@@ -42,8 +42,8 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 	// todo: make table and columns a ref instead of a react state.
 
 	useEffect(() => {
-		const a = getPathRef(getProjectDatabase(), "counters/tables");
-		a.on("value", (snapshot: any)=>{
+		const tablesRef = getPathRef(getProjectDatabase(), "counters/tables");
+		tablesRef.on("value", (snapshot: any)=>{
 			const value = Object.keys(snapshot.val() || {});
 			// tables are already seen as "loaded" prior to this.
 			// neither setTables or setCurrentTable can be called before the other
@@ -55,18 +55,36 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 			}
 			setTablesLoaded(true);
 		})
-
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [storage]);
 
 	useEffect(() => {
 		if (!currentTable) return;
+
+		async function reloadRecordView(){
+			const columns = await storage.getColumnsForTable(
+				currentTable,
+				undefined
+			);
+			setColumnsForTable(columns);
+			storage.readRecords(
+				currentTable as string,
+				{},
+				(yes) => {
+					setRecordsForTable(yes);
+				},
+				() => {}
+			);
+		}
+
 		async function load() {
 			if (currentTable === keyValueSymbol) {
-				const a = getPathRef(getProjectDatabase(), "storage/keys");
-				a.once("value", (snapshot: any)=>{
-					const value = Object.entries(snapshot.val() || {}).map(([k,v])=>{return {id:k as unknown as number, value:v as Primitive}});
-					setRecordsForTable(value);
+				const keyRef = getPathRef(getProjectDatabase(), "storage/keys");
+				keyRef.once("value", (snapshot: any)=>{
+					if (currentTable === keyValueSymbol) {
+						const value = Object.entries(snapshot.val() || {}).map(([k,v])=>{return {id:k as unknown as number, value:v as Primitive}});
+						setRecordsForTable(value);
+					}
 				})
 			} else {
 				onColumnsChange(getProjectDatabase(), currentTable, (e: any)=>{
@@ -74,31 +92,28 @@ export function StorageViewer({ storage }: { storage: FirebaseStorage }) {
 				})
 				storage.resetRecordListener();
 				//@ts-ignore
-				storage.onRecordEvent(currentTable, (a: Record<string, Primitive>, b: "create" | "delete" | "update")=>{
+				storage.onRecordEvent(currentTable, (a: DataEntry, b: "create" | "delete" | "update")=>{
 					if (b === "create") {
-						setRecordsForTable(recordsForTable)
+						setRecordsForTable((recordsForTable)=>[...recordsForTable!, a])
 					} else if (b === "delete") {
-
+						setRecordsForTable((recordsForTable)=>recordsForTable?.filter(e=>e.id!==a.id) || null);
 					} else if (b === "update") {
-
+						setRecordsForTable((recordsForTable)=>{
+							if (recordsForTable) {
+								const index = recordsForTable.findIndex((e)=>e.id===a.id);	
+								recordsForTable[index] = {...recordsForTable[index], ...a}
+								return [...recordsForTable];
+							} else {
+								reloadRecordView();
+								return recordsForTable;
+							}
+						})
 					}
 				}, (e)=>{
 					console.log(e);
 				}, false);
 		
-				const columns = await storage.getColumnsForTable(
-					currentTable,
-					undefined
-				);
-				setColumnsForTable(columns);
-				storage.readRecords(
-					currentTable,
-					{},
-					(yes) => {
-						setRecordsForTable(yes);
-					},
-					() => {}
-				);
+				reloadRecordView();
 			}
 		}
 		load();

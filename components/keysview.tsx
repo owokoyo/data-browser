@@ -14,11 +14,12 @@ import Switch from "@mui/material/Switch";
 import { Order, Primitive, StorageContext } from "../lib/util";
 import { EnhancedTableHead } from "./tableview";
 import { KeysClearConfirmation } from "./keysClearConfirmation";
-import {
-	getPathRef,
-	getProjectDatabase,
-} from "cdo-firebase-storage/firebaseUtils";
+import { getPathRef, getProjectDatabase } from "cdo-firebase-storage/firebaseUtils";
 import { EntryContextMenu } from "./entrycontextmenu";
+import { Alert, IconButton, Link, Snackbar } from "@mui/material";
+import SaveIcon from "@mui/icons-material/Save";
+import isUrl from "is-url";
+import { ValidatedInput } from "./validatedinput";
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
 	if (b[orderBy] < a[orderBy]) {
@@ -41,10 +42,7 @@ function getComparator<Key extends keyof any>(
 
 // This method is created for cross-browser compatibility, if you don't
 // need to support IE11, you can use Array.prototype.sort() directly
-function stableSort<T>(
-	array: readonly T[],
-	comparator: (a: T, b: T) => number
-) {
+function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) {
 	const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
 	stabilizedThis.sort((a, b) => {
 		const order = comparator(a[0], b[0]);
@@ -73,24 +71,18 @@ interface EnhancedTableProps {
 	cells: HeadCell[];
 }
 
-export default function KeysView({
-	rows,
-}: {
-	rows: { id: string; value: Primitive }[];
-}) {
+export default function KeysView({ rows }: { rows: { id: string; value: Primitive }[] }) {
 	const [order, setOrder] = React.useState<Order>("asc");
 	const [orderBy, setOrderBy] = React.useState<string>("calories");
 	const [page, setPage] = React.useState(0);
 	const [dense, setDense] = React.useState(false);
 	const [rowsPerPage, setRowsPerPage] = React.useState(5);
-	const [keysClearConfirmationOpen, setKeysClearConfirmationOpen] =
-		React.useState(false);
+	const [keysClearConfirmationOpen, setKeysClearConfirmationOpen] = React.useState(false);
 	const storage = React.useContext(StorageContext);
+	const [snackbarStatus, setSnackbarStatus] = React.useState<any>(null);
+	const snackbarOpen = Boolean(snackbarStatus);
 
-	const handleRequestSort = (
-		event: React.MouseEvent<unknown>,
-		property: string
-	) => {
+	const handleRequestSort = (event: React.MouseEvent<unknown>, property: string) => {
 		const isAsc = orderBy === property && order === "asc";
 		setOrder(isAsc ? "desc" : "asc");
 		setOrderBy(property);
@@ -100,9 +92,7 @@ export default function KeysView({
 		setPage(newPage);
 	};
 
-	const handleChangeRowsPerPage = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
+	const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setRowsPerPage(parseInt(event.target.value, 10));
 		setPage(0);
 	};
@@ -111,48 +101,38 @@ export default function KeysView({
 		setDense(event.target.checked);
 	};
 
+	const [isEditing, setIsEditing] = React.useState<string | null>(null);
+
 	// Avoid a layout jump when reaching the last page with empty rows.
-	const emptyRows =
-		page > 0
-			? Math.max(0, (1 + page) * rowsPerPage - Object.keys(rows).length)
-			: 0;
+	const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - Object.keys(rows).length) : 0;
 
 	const cells = [
 		{ id: "id", label: "Key", numeric: false, disablePadding: true },
 		{ id: "value", label: "Value", numeric: false, disablePadding: false },
 	];
 
+	const editValueRef = React.useRef<Primitive>(null);
 	return (
 		<>
 			<Box sx={{ width: "100%" }}>
 				<Paper sx={{ width: "100%", mb: 2 }}>
 					<TableContainer>
-						<Table
-							sx={{ minWidth: 750 }}
-							aria-labelledby="tableTitle"
-							size={dense ? "small" : "medium"}
-						>
+						<Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle" size={dense ? "small" : "medium"}>
 							<EnhancedTableHead
 								order={order}
 								orderBy={orderBy}
 								onRequestSort={handleRequestSort}
 								cells={cells}
-								onCreatePressed={() => {
-									
-								}}
+								onCreatePressed={() => {}}
 							/>
 							<TableBody>
 								{rows
 									.slice()
 									.sort(getComparator(order, orderBy))
-									.slice(
-										page * rowsPerPage,
-										page * rowsPerPage + rowsPerPage
-									)
+									.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 									.map((row, index) => {
 										// const isItemSelected = isSelected(row.id);
 										const labelId = `enhanced-table-checkbox-${index}`;
-
 										return (
 											<TableRow
 												hover
@@ -163,22 +143,55 @@ export default function KeysView({
 												// selected={isItemSelected}
 											>
 												<TableCell>
-												<EntryContextMenu edit={()=>{
-
-												}} delete={()=>{
-
-												}}/>
+													{isEditing===row.id ? (
+														<IconButton
+														onClick={() => {
+															storage.setKeyValue(
+																isEditing!,
+																editValueRef.current,
+																() => {},
+																(err: any) => {
+																	setSnackbarStatus(
+																		`Failed to set key value: ${err.msg}`
+																	);
+																}
+															);
+															setIsEditing(null);
+														}}
+													>
+														<SaveIcon />
+													</IconButton>
+													) : (
+														<EntryContextMenu
+															edit={() => {
+																setIsEditing(row.id);
+															}}
+															delete={() => {
+																storage.deleteKeyValue(row.id, ()=>{}, (err: any)=>{
+																	setSnackbarStatus(
+																		`Failed to delete key value: ${err.msg}`
+																	);
+																});
+															}}
+														/>
+													)}
 												</TableCell>
-												<TableCell
-													component="th"
-													id={labelId}
-													scope="row"
-													padding="none"
-												>
+												<TableCell component="th" id={labelId} scope="row" padding="none">
 													{row.id}
 												</TableCell>
 												<TableCell>
-													{row.value}
+													{isEditing === row.id ? (
+														<ValidatedInput
+															onInputChanged={(value) => {
+																editValueRef.current = value;
+															}}
+															initialValue={row.value}
+														/>
+													) : isUrl(String(row.value)) ? (
+														<Link href={row.value as string}>{row.value}</Link>
+													) : (
+														row.value
+													)}
 												</TableCell>
 											</TableRow>
 										);
@@ -186,8 +199,7 @@ export default function KeysView({
 								{emptyRows > 0 && (
 									<TableRow
 										style={{
-											height:
-												(dense ? 33 : 53) * emptyRows,
+											height: (dense ? 33 : 53) * emptyRows,
 										}}
 									>
 										<TableCell colSpan={6} />
@@ -224,9 +236,7 @@ export default function KeysView({
 					</div>
 				</Paper>
 				<FormControlLabel
-					control={
-						<Switch checked={dense} onChange={handleChangeDense} />
-					}
+					control={<Switch checked={dense} onChange={handleChangeDense} />}
 					label="Dense padding"
 				/>
 			</Box>
@@ -241,6 +251,15 @@ export default function KeysView({
 					done();
 				}}
 			/>
+			<Snackbar
+				open={snackbarOpen}
+				autoHideDuration={6000}
+				onClose={() => {
+					setSnackbarStatus(null);
+				}}
+			>
+				<Alert severity="error">{snackbarStatus}</Alert>
+			</Snackbar>
 		</>
 	);
 }

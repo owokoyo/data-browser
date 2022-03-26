@@ -216,7 +216,7 @@ export default function TableView({
 																	if (yes){
 																		// yay
 																	} else {
-																		setSnackbarStatus(`Succcess to delete record`);
+																		setSnackbarStatus(`Failed to delete record (omae wa mou shindeiru)`);
 																	}
 																}, (err: any)=>{
 																	setSnackbarStatus(`Failed to delete record: ${err.msg}`);
