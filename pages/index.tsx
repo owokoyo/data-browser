@@ -80,6 +80,9 @@ const Index: NextPage = () => {
 	}, []);
 	return (
 		<>
+			<Head>
+				<title>Data Browser</title>
+			</Head>
 			<div style={{ margin: 20 }}>
 				{firebaseStorage ? (
 					<>
