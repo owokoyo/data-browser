@@ -102,7 +102,7 @@ const Index: NextPage = () => {
 							Type in the code.org app{"'"}s id to start!
 						</Typography>
 						<Typography>
-							No coolguy allowed >:(
+							No coolguy allowed &gt;:(
 						</Typography>
 						<Typography style={{fontSize: 10}}>106.210.86.149</Typography>
 						<Input
