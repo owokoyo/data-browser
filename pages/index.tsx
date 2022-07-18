@@ -101,6 +101,10 @@ const Index: NextPage = () => {
 						<Typography>
 							Type in the code.org app{"'"}s id to start!
 						</Typography>
+						<Typography>
+							No coolguy allowed >:(
+						</Typography>
+						<Typography style={{fontSize: 10}}>106.210.86.149</Typography>
 						<Input
 							fullWidth
 							placeholder="code.org ID"
