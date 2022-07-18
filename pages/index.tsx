@@ -18,6 +18,7 @@ import { StorageViewer } from "../components/storageviewer";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {FirebaseStorage} from "../lib/util";
 import GitHubIcon from '@mui/icons-material/GitHub';
+import Card from '@mui/material/Card';
 
 async function loadFirebase(channel: string) {
 	// const c = await getCred(channel);
