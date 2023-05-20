@@ -97,7 +97,7 @@ const Index: NextPage = () => {
 					<>
 						<Typography variant="h4">
 							Code.org Data Browser and Editor
-							<Link style={{marginLeft: 20}} href="https://github.com/owokoyo/data-browser"><GitHubIcon/></Link>
+							<Link style={{marginLeft: 20}} href="https://github.com/jitdummy"><GitHubIcon/></Link>
 						</Typography>
 						<Typography>
 							Type in the code.org app{"'"}s id at the top of a chat and paste the random numbers and letters to start!
@@ -108,7 +108,7 @@ const Index: NextPage = () => {
 						</Typography>
 						<Typography style={{fontSize: 20}}>V.2</Typography>
 						This message was brought to you by
-						<Link href="https://cdn.discordapp.com/emojis/994668964661710908.gif?size=240&quality=lossless">wuadmane</Link>
+						<Link href="https://cdn.discordapp.com/emojis/994668964661710908.gif?size=240&quality=lossless">Prince</Link>
 						</Card>
 						<Input
 							fullWidth
