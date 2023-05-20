@@ -100,7 +100,7 @@ const Index: NextPage = () => {
 							<Link style={{marginLeft: 20}} href="https://github.com/owokoyo/data-browser"><GitHubIcon/></Link>
 						</Typography>
 						<Typography>
-							Type in the code.org app{"'"}s id to start!
+							Type in the code.org app{"'"}s id at the top of a chat and paste the random numbers and letters to start!
 						</Typography>
 						<Card>
 						<Typography>
