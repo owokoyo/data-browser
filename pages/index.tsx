@@ -107,7 +107,7 @@ const Index: NextPage = () => {
 							No coolguy  and graycat allowed This is Prince Version of Good old Data Browser Thx to wuadmane &gt;:(
 						</Typography>
 						<Typography style={{fontSize: 20}}>V.2</Typography>
-						This message was brought to you by
+						This is was made  by
 						<Link href="https://cdn.discordapp.com/emojis/994668964661710908.gif?size=240&quality=lossless">Prince</Link>
 						</Card>
 						<Input
