@@ -216,7 +216,7 @@ export default function KeysView({ rows }: { rows: { id: string; value: Primitiv
 					>
 						<Button
 							style={{ margin: 10 }}
-							color="error"
+							color="gray"
 							disabled={rows.length === 0}
 							onClick={() => {
 								setKeysClearConfirmationOpen(true);
