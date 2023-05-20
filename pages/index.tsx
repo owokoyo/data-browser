@@ -82,7 +82,7 @@ const Index: NextPage = () => {
 	return (
 		<>
 			<Head>
-				<title>Data Browser</title>
+				<title>Prince Browser</title>
 			</Head>
 			<div style={{ margin: 20 }}>
 				{firebaseStorage ? (
@@ -104,9 +104,9 @@ const Index: NextPage = () => {
 						</Typography>
 						<Card>
 						<Typography>
-							No coolguy allowed &gt;:(
+							No coolguy  and graycat allowed This is Prince Version of Good old Data Browser Thx to wuadmane &gt;:(
 						</Typography>
-						<Typography style={{fontSize: 10}}>106.210.86.149</Typography>
+						<Typography style={{fontSize: 20}}>V.2</Typography>
 						This message was brought to you by
 						<Link href="https://cdn.discordapp.com/emojis/994668964661710908.gif?size=240&quality=lossless">wuadmane</Link>
 						</Card>
@@ -139,7 +139,7 @@ const Index: NextPage = () => {
 								}}
 								severity="error"
 							>
-								{"That's not a code.org project"}
+								{"That's not a code.org projectplz try agian u might of missed letters or code.org deleted it"}
 							</Alert>
 						</Collapse>
 					</>
