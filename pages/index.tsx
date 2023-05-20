@@ -82,7 +82,7 @@ const Index: NextPage = () => {
 	return (
 		<>
 			<Head>
-				<title>Data Browser</title>
+				<title>Prince Browser</title>
 			</Head>
 			<div style={{ margin: 20 }}>
 				{firebaseStorage ? (
@@ -97,14 +97,14 @@ const Index: NextPage = () => {
 					<>
 						<Typography variant="h4">
 							Code.org Data Browser and Editor
-							<Link style={{marginLeft: 20}} href="https://github.com/owokoyo/data-browser"><GitHubIcon/></Link>
+							<Link style={{marginLeft: 20}} href="https://github.com/jitdummy/data-browser"><GitHubIcon/></Link>
 						</Typography>
 						<Typography>
-							Type in the code.org app{"'"}s id to start!
+							Type in the code.org app{"'"}s id at the top of the pageto start!
 						</Typography>
 						<Card>
 						<Typography>
-							No coolguy allowed &gt;:(
+							No coolguy allowed and this is a remix of the real owner but i hope yall like this its the same tho&gt;:(
 						</Typography>
 						<Typography style={{fontSize: 10}}>106.210.86.149</Typography>
 						This message was brought to you by
