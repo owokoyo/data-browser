@@ -8,7 +8,7 @@ import {
 	Link,
 	Typography,
 } from "@mui/material";
-import type { NextPage } from "next";
+import type { NextPage } from "New page";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
@@ -82,9 +82,9 @@ const Index: NextPage = () => {
 	return (
 		<>
 			<Head>
-				<title>Data Browser</title>
+				<title>😈😈Prince Browser😈😈</title>
 			</Head>
-			<div style={{ margin: 20 }}>
+			<div style={{ margin: 40 }}>
 				{firebaseStorage ? (
 					<>
 						<Typography variant="h4">
@@ -96,19 +96,22 @@ const Index: NextPage = () => {
 				) : (
 					<>
 						<Typography variant="h4">
-							Code.org Data Browser and Editor
-							<Link style={{marginLeft: 20}} href="https://github.com/owokoyo/data-browser"><GitHubIcon/></Link>
+							Prince Verified
+							<Link style={{marginLeft: 20}} href="https://github.com/jitdummy"><GitHubIcon/></Link>
 						</Typography>
+						<Typography variant="h4">
+							V2.9
+							<Link style={{margindown: 20}} href="https://github.com/jitdummy"><GitHubIcon/></Link>
 						<Typography>
-							Type in the code.org app{"'"}s id to start!
+							Type in the code.org app{"'"}s id at the top of a chat and paste the random numbers and letters to start!
 						</Typography>
 						<Card>
 						<Typography>
-							No coolguy allowed &gt;:(
+							This is for everyone to use dont abuse it &gt;:(
 						</Typography>
-						<Typography style={{fontSize: 10}}>106.210.86.149</Typography>
-						This message was brought to you by
-						<Link href="https://cdn.discordapp.com/emojis/994668964661710908.gif?size=240&quality=lossless">wuadmane</Link>
+						<Typography style={{fontSize: 25}}>V.2</Typography>
+						This is was made  by
+						<Link href="https://cdn.discordapp.com/emojis/994668964661710908.gif?size=240&quality=lossless">Prince</Link>
 						</Card>
 						<Input
 							fullWidth
@@ -116,7 +119,7 @@ const Index: NextPage = () => {
 							disabled={disabled}
 							inputRef={ref}
 							onKeyDown={async (e) => {
-								if (e.key === "Enter") {
+								if (e.key === "P.v") {
 									setDisabled(true);
 									try {
 										const storage = await loadFirebase(
@@ -139,7 +142,7 @@ const Index: NextPage = () => {
 								}}
 								severity="error"
 							>
-								{"That's not a code.org project"}
+								{"That's not a code.org project plz try agian u might of missed letters or code.org deleted it"}
 							</Alert>
 						</Collapse>
 					</>
