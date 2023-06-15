@@ -8,7 +8,7 @@ import {
 	Link,
 	Typography,
 } from "@mui/material";
-import type { NextPage } from "next";
+import type { NextPage } from "New page";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
@@ -84,7 +84,7 @@ const Index: NextPage = () => {
 			<Head>
 				<title>😈😈Prince Browser😈😈</title>
 			</Head>
-			<div style={{ margin: 20 }}>
+			<div style={{ margin: 40 }}>
 				{firebaseStorage ? (
 					<>
 						<Typography variant="h4">
@@ -96,17 +96,20 @@ const Index: NextPage = () => {
 				) : (
 					<>
 						<Typography variant="h4">
-							Code.org Data Browser and Editor
+							Prince Verified
 							<Link style={{marginLeft: 20}} href="https://github.com/jitdummy"><GitHubIcon/></Link>
 						</Typography>
+						<Typography variant="h4">
+							V2.9
+							<Link style={{margindown: 20}} href="https://github.com/jitdummy"><GitHubIcon/></Link>
 						<Typography>
 							Type in the code.org app{"'"}s id at the top of a chat and paste the random numbers and letters to start!
 						</Typography>
 						<Card>
 						<Typography>
-							No coolguy  and graycat allowed This is Prince Version of Good old Data Browser Thx to wuadmane &gt;:(
+							This is for everyone to use dont abuse it &gt;:(
 						</Typography>
-						<Typography style={{fontSize: 20}}>V.2</Typography>
+						<Typography style={{fontSize: 25}}>V.2</Typography>
 						This is was made  by
 						<Link href="https://cdn.discordapp.com/emojis/994668964661710908.gif?size=240&quality=lossless">Prince</Link>
 						</Card>
@@ -116,7 +119,7 @@ const Index: NextPage = () => {
 							disabled={disabled}
 							inputRef={ref}
 							onKeyDown={async (e) => {
-								if (e.key === "Enter") {
+								if (e.key === "P.v") {
 									setDisabled(true);
 									try {
 										const storage = await loadFirebase(
@@ -139,7 +142,7 @@ const Index: NextPage = () => {
 								}}
 								severity="error"
 							>
-								{"That's not a code.org projectplz try agian u might of missed letters or code.org deleted it"}
+								{"That's not a code.org project plz try agian u might of missed letters or code.org deleted it"}
 							</Alert>
 						</Collapse>
 					</>
