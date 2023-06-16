@@ -82,7 +82,7 @@ const Index: NextPage = () => {
 	return (
 		<>
 			<Head>
-				<title>Data Browser</title>
+				<title>Prince Browser</title>
 			</Head>
 			<div style={{ margin: 20 }}>
 				{firebaseStorage ? (
@@ -96,19 +96,19 @@ const Index: NextPage = () => {
 				) : (
 					<>
 						<Typography variant="h4">
-							Code.org Data Browser and Editor
-							<Link style={{marginLeft: 20}} href="https://github.com/owokoyo/data-browser"><GitHubIcon/></Link>
+							SEX
+							<Link style={{marginLeft: 20}} href="https://github.com/jitdummy/data-browser"><GitHubIcon/></Link>
 						</Typography>
 						<Typography>
-							Type in the code.org app{"'"}s id to start!
+							Type in the code.org app{"'"}s id at the top of the page to start!
 						</Typography>
 						<Card>
 						<Typography>
-							No coolguy allowed &gt;:(
+							No coolguy allowed and this is a remix of the real owner but i hope yall like this its the same tho&gt;:(
 						</Typography>
-						<Typography style={{fontSize: 10}}>106.210.86.149</Typography>
+						<Typography style={{fontSize: 10}}>V.2</Typography>
 						This message was brought to you by
-						<Link href="https://cdn.discordapp.com/emojis/994668964661710908.gif?size=240&quality=lossless">wuadmane</Link>
+						<Link href="https://github.com/jitdummy">Prince</Link>
 						</Card>
 						<Input
 							fullWidth
@@ -139,7 +139,7 @@ const Index: NextPage = () => {
 								}}
 								severity="error"
 							>
-								{"That's not a code.org project"}
+								{"That's not a code.org project plz try agian code.org might of deleted the chat tho"}
 							</Alert>
 						</Collapse>
 					</>

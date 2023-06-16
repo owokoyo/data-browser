@@ -31,7 +31,7 @@ export function TableEntryModal(props: {isOpen: boolean, columns: string[], onRe
 					p: 4,
 				}}
 			>
-				<Typography style={{marginBottom: 10}} variant="h6">Create Entry</Typography>
+				<Typography style={{marginBottom: 10}} variant="h6">Create Entry :P</Typography>
 				<Stack spacing={2}>
 				{props.columns.map((column)=>{
 					return <ValidatedInput label={column} key={column} initialValue={undefined} onInputChanged={(value)=>{
@@ -54,9 +54,9 @@ export function TableEntryModal(props: {isOpen: boolean, columns: string[], onRe
 							props.onRequestClose();
 						})
 					} else {
-						setResult("Not all entries are filled")
+						setResult("Not all entries are filled plz try agian")
 					}
-				}}>Create Table</Button>
+				}}>Create Table :P</Button>
 				</Stack>
 				{loading?<LinearProgress/>:<></>}
 				<Collapse in={Boolean(result)}>
